@@ -4,7 +4,12 @@ function show(id,text){const e=$(id);if(e){e.textContent=text;e.style.display="b
 $("bookingForm")?.addEventListener("submit",async e=>{
  e.preventDefault(); show("bookingMessage","Sending request...");
  const v=id=>$(id)?.value||null;
- const {data,error}=await db.rpc("create_guest_booking",{p_first_name:v("firstName"),p_last_name:v("lastName"),p_mobile:v("mobile"),p_whatsapp:v("whatsapp"),p_pickup_location:v("pickupLocation"),p_dropoff_location:v("dropoffLocation"),p_pickup_time:v("pickupTime"),p_estimated_end_time:v("estimatedEndTime"),p_trip_type:v("tripType"),p_passengers:Number(v("passengers")||1),p_comment:v("comment")});
+ const {data,error}=await db.rpc("create_guest_booking",{
+   p_first_name:v("firstName"),p_last_name:v("lastName"),p_mobile:v("mobile"),p_whatsapp:v("whatsapp"),
+   p_pickup_location:v("pickupLocation"),p_pickup_map_link:v("pickupMapLink"),
+   p_dropoff_location:v("dropoffLocation"),p_dropoff_map_link:v("dropoffMapLink"),
+   p_pickup_time:v("pickupTime"),p_trip_type:v("tripType"),p_passengers:Number(v("passengers")||1),p_comment:v("comment")
+ });
  if(error)return show("bookingMessage","Error: "+error.message);
  show("bookingMessage","Request sent successfully. Reference: "+(data?.reference_number||data||"Created")); e.target.reset();
 });
