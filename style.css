@@ -18,3 +18,5 @@ table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;ove
 .booking-info>div{padding:14px;background:#f5f7fb;border:1px solid #e2e7ee;border-radius:12px}
 .booking-info a{font-weight:700;color:#173f70}
 @media(max-width:760px){.booking-info{grid-template-columns:1fr}table{min-width:680px}}
+
+.track-card{display:grid;gap:12px}.track-head,.track-row{display:flex;justify-content:space-between;gap:16px;align-items:center}.track-head{font-size:18px;padding-bottom:12px;border-bottom:1px solid #dce4ee}.track-row{padding:7px 0}.track-row span,.track-note span{color:#687386;font-size:13px}.status-pill{background:#e9f1ff;border-radius:999px;padding:6px 10px;text-transform:capitalize;font-size:12px;font-weight:800}.map-btn{display:block;text-align:center;text-decoration:none;padding:11px;border:1px solid #cbd6e3;border-radius:10px;font-weight:800;color:#173f70;background:#fff}.track-note{background:#fff;border:1px solid #dce4ee;padding:13px;border-radius:11px}.track-note p{margin:5px 0 0}.pay-btn{width:100%;font-size:17px;margin-top:4px}
