@@ -1,1 +1,10 @@
-{"name":"Luxury Transport Dubai","short_name":"Luxury Transport","start_url":"./index.html","display":"standalone","background_color":"#07111f","theme_color":"#07111f","description":"Dubai private transport booking and trip management."}
+{
+  "name": "Luxury Transport Dubai",
+  "short_name": "Luxury Transport",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#071525",
+  "description": "Private transport booking in Dubai and UAE"
+}
