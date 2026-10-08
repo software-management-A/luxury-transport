@@ -1,0 +1,2 @@
+/* Append to existing style.css if needed */
+.track-card{display:grid;gap:12px;padding:14px;background:#fff;border-radius:12px;margin-top:12px}.track-head,.track-row{display:flex;justify-content:space-between;gap:14px}.track-row span{color:#687386}.status-pill{padding:5px 10px;border-radius:30px;background:#eaf2ff}.map-btn{padding:10px;border:1px solid #ddd;border-radius:9px;text-align:center}.pay-btn{width:100%}
