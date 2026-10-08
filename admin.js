@@ -24,8 +24,8 @@ function render(){
 }
 function openBooking(id){
  const b=bookings.find(x=>String(x.id)===String(id));if(!b)return;
- $("bookingManager").style.display="block";$("manageId").value=b.id;$("manageTitle").textContent=`Manage ${b.reference_number}`;
- $("bookingInfo").innerHTML=`<div><strong>Customer</strong><br>${esc(b.first_name)} ${esc(b.last_name||"")}</div>
+ $("bookingManager").style.display="block";$("manageId").value=b.id;$("manageTitle").textContent=`Manage ${b.reference_number} · PIN: ${b.tracking_pin||"—"}`;
+ $("bookingInfo").innerHTML=`<div><strong>Tracking PIN</strong><br>${esc(b.tracking_pin||"—")}</div><div><strong>Customer</strong><br>${esc(b.first_name)} ${esc(b.last_name||"")}</div>
  <div><strong>Contact</strong><br>${telLink(b.phone,b.phone)} · ${waLink(b.whatsapp||b.phone)}</div>
  <div><strong>Pickup</strong><br>${mapLink(b.pickup_map_link,b.pickup_location)}</div>
  <div><strong>Drop-off</strong><br>${mapLink(b.dropoff_map_link,b.dropoff_location)}</div>
