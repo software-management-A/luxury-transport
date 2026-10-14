@@ -587,6 +587,41 @@ $("trackForm")?.addEventListener(
     const price =
       Number(r.price);
 
+    const bookingFils =
+      Number.isFinite(price)
+        ? Math.round(price * 100)
+        : 0;
+
+    const processingFeeFils =
+      bookingFils > 0
+        ? Math.round((bookingFils * 5) / 100) + 100
+        : 0;
+
+    const totalFils =
+      bookingFils + processingFeeFils;
+
+    const money = (fils) =>
+      (fils / 100).toLocaleString("en-AE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+    const customerName =
+      String(r.first_name || "Guest").trim() || "Guest";
+
+    const displayTripDate = (() => {
+      const parts = String(tripDate || "").split("-");
+      if (parts.length !== 3) return tripDate;
+      const d = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T12:00:00`);
+      return Number.isNaN(d.getTime())
+        ? tripDate
+        : new Intl.DateTimeFormat("en-GB", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }).format(d);
+    })();
+
     /*
      * Pay Now is available only when:
      *
@@ -737,20 +772,62 @@ $("trackForm")?.addEventListener(
         ${
           canPay
             ? `
-              <button
-                type="button"
-                id="ziinaPayNow"
-                class="btn pay-btn"
-              >
-                Pay Now — ${esc(
-                  r.price,
-                )} ${esc(
-                  r.currency ||
-                    "AED",
-                )}
-              </button>
+              <section class="payment-panel" aria-label="Secure payment summary">
+                <div class="payment-welcome">
+                  <span class="payment-lock">🔒</span>
+                  <div>
+                    <h3>Welcome, ${esc(customerName)}</h3>
+                    <p>Thank you for choosing Luxury Transport Dubai. We truly appreciate your trust in us.</p>
+                  </div>
+                </div>
+
+                <div class="payment-meta">
+                  <div>
+                    <span>Booking ID</span>
+                    <strong>${esc(r.reference_number || "-")}</strong>
+                  </div>
+                  <div>
+                    <span>Trip Date</span>
+                    <strong>${esc(displayTripDate || "-")}</strong>
+                  </div>
+                </div>
+
+                <div class="payment-breakdown">
+                  <div>
+                    <span>Booking Amount</span>
+                    <strong>${esc(money(bookingFils))} AED</strong>
+                  </div>
+                  <div>
+                    <span>Ziina Processing Fee</span>
+                    <strong>${esc(money(processingFeeFils))} AED</strong>
+                  </div>
+                  <div class="payment-total">
+                    <span>Total</span>
+                    <strong>${esc(money(totalFils))} AED</strong>
+                  </div>
+                </div>
+
+                <p class="payment-tip">Optional tip can be added at checkout when available.</p>
+
+                <button
+                  type="button"
+                  id="ziinaPayNow"
+                  class="btn pay-btn"
+                >
+                  Pay Securely — ${esc(money(totalFils))} AED
+                </button>
+
+                <p class="payment-powered">Secure payment powered by Ziina</p>
+              </section>
             `
-            : ""
+            : normalizedPaymentStatus === "paid"
+              ? `
+                <div class="payment-success">
+                  <strong>✓ Payment received</strong>
+                  <p>Thank you for your payment and for trusting Luxury Transport Dubai. We look forward to serving you.</p>
+                </div>
+              `
+              : ""
         }
 
       </div>
