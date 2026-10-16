@@ -131,14 +131,14 @@ $("bookingForm")?.addEventListener(
 
     const trackUrl =
       new URL(
-        "./index.html",
+        "./tracking.html",
         window.location.href,
       );
 
     trackUrl.search = "";
 
-    trackUrl.hash =
-      "track?ref=" +
+    trackUrl.search =
+      "?ref=" +
       encodeURIComponent(ref) +
       "&date=" +
       encodeURIComponent(
