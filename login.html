@@ -1,1 +1,62 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login</title><link rel="stylesheet" href="./style.css"></head><body><header class="top"><div class="wrap nav"><div class="brand">Luxury Transport Dubai</div><a class="btn" href="./index.html">Home</a></div></header><div class="pagehead"><div class="wrap"><h1>Account Login</h1><p>Customer and administrator access.</p></div></div><main class="section"><div class="wrap"><div class="card" style="max-width:520px;margin:auto"><form id="loginForm" class="formgrid"><div class="field full"><label>Email</label><input id="email" type="email" required></div><div class="field full"><label>Password</label><input id="password" type="password" required></div><div class="field full"><button class="btn">Login</button></div></form><div id="loginMsg" class="msg"></div></div></div></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./config.js"></script><script src="./auth.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071525">
+  <title>Customer Account | Luxury Transport Dubai</title>
+  <link rel="stylesheet" href="./style.css?v=17">
+</head>
+<body>
+<header class="top"><div class="wrap nav"><a class="brand" href="./index.html">Luxury Transport Dubai</a><a class="mini-btn" href="./index.html">Home</a></div></header>
+<div class="pagehead"><div class="wrap"><h1>Customer Account</h1><p>Login, create an account, or reset your password.</p></div></div>
+<main class="section"><div class="wrap auth-wrap">
+  <div class="card auth-card">
+    <div class="auth-tabs" id="authTabs">
+      <button type="button" class="auth-tab active" data-panel="loginPanel">Login</button>
+      <button type="button" class="auth-tab" data-panel="signupPanel">Sign Up</button>
+      <button type="button" class="auth-tab" data-panel="forgotPanel">Forgot Password</button>
+    </div>
+
+    <section id="loginPanel" class="auth-panel active">
+      <h2>Welcome back</h2><p class="muted">Sign in to view your private bookings and saved locations.</p>
+      <form id="loginForm" class="formgrid">
+        <div class="field full"><label>Email</label><input id="loginEmail" type="email" autocomplete="email" required></div>
+        <div class="field full"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+        <div class="field full"><button class="btn" type="submit">Login</button></div>
+      </form>
+    </section>
+
+    <section id="signupPanel" class="auth-panel">
+      <h2>Create account</h2><p class="muted">Your account is private and protected by your login.</p>
+      <form id="signupForm" class="formgrid">
+        <div class="field"><label>First Name</label><input id="signupFirstName" autocomplete="given-name" required></div>
+        <div class="field"><label>Last Name</label><input id="signupLastName" autocomplete="family-name" required></div>
+        <div class="field full"><label>Email</label><input id="signupEmail" type="email" autocomplete="email" required></div>
+        <div class="field full"><label>Phone</label><input id="signupPhone" type="tel" autocomplete="tel" placeholder="+971..." required></div>
+        <div class="field full"><label>Password</label><input id="signupPassword" type="password" autocomplete="new-password" minlength="8" required><small>Minimum 8 characters.</small></div>
+        <div class="field full"><button class="btn" type="submit">Create Account</button></div>
+      </form>
+    </section>
+
+    <section id="forgotPanel" class="auth-panel">
+      <h2>Reset password</h2><p class="muted">Enter your email and we will send the password reset link.</p>
+      <form id="forgotForm" class="formgrid">
+        <div class="field full"><label>Email</label><input id="forgotEmail" type="email" autocomplete="email" required></div>
+        <div class="field full"><button class="btn" type="submit">Send Reset Link</button></div>
+      </form>
+    </section>
+
+    <section id="resetPanel" class="auth-panel">
+      <h2>Choose new password</h2><p class="muted">Enter your new password below.</p>
+      <form id="resetForm" class="formgrid">
+        <div class="field full"><label>New Password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" required></div>
+        <div class="field full"><button class="btn" type="submit">Update Password</button></div>
+      </form>
+    </section>
+
+    <div id="loginMsg" class="msg" role="status" aria-live="polite"></div>
+  </div>
+</div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./config.js"></script><script src="./auth.js?v=17"></script>
+</body></html>

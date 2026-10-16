@@ -36,6 +36,23 @@ function safeUrl(u) {
   }
 }
 
+
+/* =====================================================
+   OPTIONAL MULTI-STOP BOOKING
+   ===================================================== */
+let extraStopCounter = 0;
+$("addStopBtn")?.addEventListener("click", () => {
+  extraStopCounter += 1;
+  const row = document.createElement("div");
+  row.className = "extra-stop-row";
+  row.innerHTML = `<div class="field"><label>Stop ${extraStopCounter} name</label><input class="extra-stop-name" placeholder="Hotel / building / area" required></div><div class="field"><label>Google Maps link (optional)</label><input class="extra-stop-map" type="url" placeholder="https://maps.google.com/..."></div><button type="button" class="location-delete extra-stop-remove">Remove</button>`;
+  row.querySelector(".extra-stop-remove").addEventListener("click", () => row.remove());
+  $("extraStops").appendChild(row);
+});
+function collectExtraStops(){
+  return [...document.querySelectorAll("#extraStops .extra-stop-row")].map((row, i) => ({order:i+1,name:row.querySelector(".extra-stop-name").value.trim(),map_link:row.querySelector(".extra-stop-map").value.trim()||null})).filter(x=>x.name);
+}
+
 /* =====================================================
    BOOKING FORM
    ===================================================== */
@@ -114,6 +131,17 @@ $("bookingForm")?.addEventListener(
       Array.isArray(data)
         ? data[0]
         : data;
+
+    const extraStops = collectExtraStops();
+    if (extraStops.length && r?.reference_number && r?.tracking_pin) {
+      const { error: stopError } = await db.rpc("add_guest_booking_stops", {
+        p_reference_number: r.reference_number,
+        p_tracking_pin: String(r.tracking_pin),
+        p_trip_date: tripDate,
+        p_stops: extraStops
+      });
+      if (stopError) console.error("Could not save additional stops", stopError);
+    }
 
     const ref =
       r?.reference_number ||
@@ -505,6 +533,17 @@ $("trackForm")?.addEventListener(
       Array.isArray(data)
         ? data[0]
         : data;
+
+    const extraStops = collectExtraStops();
+    if (extraStops.length && r?.reference_number && r?.tracking_pin) {
+      const { error: stopError } = await db.rpc("add_guest_booking_stops", {
+        p_reference_number: r.reference_number,
+        p_tracking_pin: String(r.tracking_pin),
+        p_trip_date: tripDate,
+        p_stops: extraStops
+      });
+      if (stopError) console.error("Could not save additional stops", stopError);
+    }
 
     if (!r) {
       box.textContent =
