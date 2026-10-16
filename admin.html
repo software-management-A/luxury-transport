@@ -7,7 +7,7 @@
 
   <title>Admin Dashboard | Luxury Transport Dubai</title>
 
-  <link rel="stylesheet" href="./style.css?v=13">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><link rel="stylesheet" href="./style.css?v=18">
 
   <style>
     :root {
@@ -709,12 +709,16 @@
       </div>
 
     </div>
+  <section class="section" id="locations"><div class="wrap"><div class="card"><div class="section-heading"><div><div class="eyebrow">CUSTOMER MAP OPTIONS</div><h2>Verified Locations</h2><p>Add exact places customers can quickly choose.</p></div></div><form id="adminLocationForm" class="formgrid"><div class="field"><label>Name</label><input id="locName" required placeholder="Dubai Mall"></div><div class="field"><label>Category</label><select id="locCategory"><option value="landmark">Landmark</option><option value="airport">Airport</option><option value="hotel">Hotel</option><option value="school">School</option><option value="mall">Mall</option><option value="other">Other</option></select></div><div class="field full"><label>Address / pinned location</label><input id="locAddress" readonly required><input id="locLat" type="hidden"><input id="locLng" type="hidden"><button type="button" class="pin-btn" id="locPin">📍 Select / Pin Location</button></div><div class="field"><label class="day-toggle"><input type="checkbox" id="locActive" checked> Active</label></div><div class="field"><button class="btn" type="submit">Save Location</button></div></form><div id="locMsg" class="msg"></div><div id="adminLocationsList" class="admin-location-list"></div></div></div></section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="./config.js"></script>
+  <script src="./location-picker.js?v=18"></script>
   <script src="./admin.js?v=20261012-2"></script>
   <script src="./session-guard.js?v=final"></script>
+  <script src="./admin-locations.js?v=18"></script>
 
 </body>
 </html>

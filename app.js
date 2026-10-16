@@ -42,16 +42,12 @@ function safeUrl(u) {
    ===================================================== */
 let extraStopCounter = 0;
 $("addStopBtn")?.addEventListener("click", () => {
-  extraStopCounter += 1;
-  const row = document.createElement("div");
-  row.className = "extra-stop-row";
-  row.innerHTML = `<div class="field"><label>Stop ${extraStopCounter} name</label><input class="extra-stop-name" placeholder="Hotel / building / area" required></div><div class="field"><label>Google Maps link (optional)</label><input class="extra-stop-map" type="url" placeholder="https://maps.google.com/..."></div><button type="button" class="location-delete extra-stop-remove">Remove</button>`;
-  row.querySelector(".extra-stop-remove").addEventListener("click", () => row.remove());
-  $("extraStops").appendChild(row);
+  extraStopCounter += 1; const row=document.createElement("div"); row.className="extra-stop-row route-point";
+  row.innerHTML=`<div class="field"><label>Stop ${extraStopCounter}</label><input class="extra-stop-name" placeholder="Select exact stop" readonly required><input class="extra-stop-map" type="hidden"><input class="extra-stop-lat" type="hidden"><input class="extra-stop-lng" type="hidden"></div><button type="button" class="pin-btn extra-stop-pin">📍 Select / Pin Stop</button><button type="button" class="location-delete extra-stop-remove">Remove</button>`;
+  row.querySelector(".extra-stop-pin").onclick=()=>LocationPicker.open({name:row.querySelector(".extra-stop-name"),lat:row.querySelector(".extra-stop-lat"),lng:row.querySelector(".extra-stop-lng"),link:row.querySelector(".extra-stop-map")});
+  row.querySelector(".extra-stop-remove").onclick=()=>row.remove(); $("extraStops").appendChild(row);
 });
-function collectExtraStops(){
-  return [...document.querySelectorAll("#extraStops .extra-stop-row")].map((row, i) => ({order:i+1,name:row.querySelector(".extra-stop-name").value.trim(),map_link:row.querySelector(".extra-stop-map").value.trim()||null})).filter(x=>x.name);
-}
+function collectExtraStops(){return [...document.querySelectorAll("#extraStops .extra-stop-row")].map((row,i)=>({order:i+1,name:row.querySelector(".extra-stop-name").value.trim(),map_link:row.querySelector(".extra-stop-map").value.trim()||null,latitude:Number(row.querySelector(".extra-stop-lat").value)||null,longitude:Number(row.querySelector(".extra-stop-lng").value)||null})).filter(x=>x.name);}
 
 /* =====================================================
    BOOKING FORM
