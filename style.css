@@ -70,3 +70,21 @@ table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;ove
 @keyframes bydIntroMove{0%{transform:scale(1.08) translateX(-2.5%);filter:brightness(.72)}55%{filter:brightness(1)}100%{transform:scale(1) translateX(0);filter:brightness(1)}}
 @media(max-width:600px){.intro-visual>img{object-position:62% center}.intro-overlay{padding-left:16px;padding-right:16px}}
 @media(prefers-reduced-motion:reduce){.car-intro{display:none}.intro-visual>img,.intro-overlay .intro-name,.intro-overlay .intro-sub{animation:none}}
+
+/* =========================================================
+   V21 RESPONSIVE VIDEO INTRO
+   Mobile: fills portrait screen. Desktop/laptop: shows the
+   complete portrait video without stretching or distortion.
+   ========================================================= */
+.car-intro{position:fixed;inset:0;z-index:20000;background:#03080d;display:block;overflow:hidden;color:#fff;transition:opacity .45s ease,visibility .45s ease}
+.car-intro.done{opacity:0;visibility:hidden;pointer-events:none}
+.intro-video-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#03080d;overflow:hidden}
+.intro-video{width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:#03080d}
+.intro-video-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.04) 45%,rgba(0,0,0,.60) 100%)}
+.intro-overlay{position:absolute;z-index:2;left:0;right:0;bottom:max(24px,env(safe-area-inset-bottom));padding:22px 18px;text-align:center;text-shadow:0 3px 18px rgba(0,0,0,.9);pointer-events:none}
+.intro-overlay .intro-name{font-size:clamp(26px,4vw,46px);font-weight:900;color:#fff;opacity:1;transform:none;animation:none}
+.intro-overlay .intro-sub{font-size:clamp(13px,2vw,18px);font-weight:700;color:#e9f1f7;margin-top:5px;opacity:1;transform:none;animation:none}
+.car-intro .intro-skip{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));z-index:5;width:auto;margin:0;border:1px solid rgba(255,255,255,.72);background:rgba(4,12,20,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border-radius:999px;padding:10px 17px;font-size:14px;font-weight:800;cursor:pointer}
+@media(max-width:700px){.intro-video{object-fit:cover}.intro-overlay{bottom:max(18px,env(safe-area-inset-bottom));padding:18px 14px}}
+@media(min-width:701px){.intro-video-wrap:before{content:"";position:absolute;inset:-28px;background:#08131e;filter:blur(20px);opacity:.9}.intro-video{position:relative;z-index:1;width:min(100%,1080px)}.intro-video-shade,.intro-overlay{z-index:2}}
+@media(prefers-reduced-motion:reduce){.car-intro{display:none}}
