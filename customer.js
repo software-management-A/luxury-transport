@@ -36,7 +36,8 @@
     $("summary").innerHTML = `<div class="stat"><span>Bookings</span><strong>${list.length}</strong></div><div class="stat"><span>Upcoming</span><strong>${upcoming}</strong></div><div class="stat"><span>Paid</span><strong>${paid}</strong></div>`;
     const holder = $("bookingCards");
     if (!list.length) { holder.innerHTML = `<div class="empty-state"><strong>No account bookings yet</strong><p>New bookings made while signed in can appear here when linked to your account.</p><a class="btn" href="./booking.html">New Booking</a></div>`; return; }
-    holder.innerHTML = list.map(b => `<article class="customer-booking"><div class="customer-booking-head"><strong>${esc(b.reference_number)}</strong><span class="status-pill">${esc(b.status)}</span></div><div class="customer-route">${esc(b.pickup_location)} <b>→</b> ${esc(b.dropoff_location)}</div><div class="customer-booking-meta"><span>${b.pickup_time ? esc(new Date(b.pickup_time).toLocaleString()) : "—"}</span><span>${b.price == null ? "Price pending" : `${esc(b.price)} ${esc(b.currency || "AED")}`}</span><span>Payment: ${esc(b.payment_status || "unpaid")}</span></div></article>`).join("");
+    holder.innerHTML = list.map(b => `<article class="customer-booking"><div class="customer-booking-head"><strong>${esc(b.reference_number)}</strong><span class="status-pill">${esc(b.status)}</span></div><div class="customer-route">${esc(b.pickup_location)} <b>→</b> ${esc(b.dropoff_location)}</div><div class="customer-booking-meta"><span>${b.pickup_time ? esc(new Date(b.pickup_time).toLocaleString()) : "—"}</span><span>${b.price == null ? "Price pending" : `${esc(b.price)} ${esc(b.currency || "AED")}`}</span><span>Payment: ${esc(b.payment_status || "unpaid")}</span></div>${String(b.status).toLowerCase()==="completed"?`<button class="mini-btn review-trip" type="button" data-id="${esc(b.id)}">★ Leave Review</button>`:""}</article>`).join("");
+    holder.querySelectorAll(".review-trip").forEach(btn=>btn.addEventListener("click",()=>submitReview(btn.dataset.id)));
   }
 
   async function loadLocations() {
@@ -53,6 +54,17 @@
     const { error } = await db.from("customer_saved_locations").insert(row);
     if (error) return message(error.message, "error"); e.target.reset(); message("Location saved.", "success"); loadLocations();
   });
+
+
+  async function submitReview(bookingId) {
+    const rating = Number(prompt("Rate this completed trip from 1 to 5 stars:"));
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return;
+    const review = prompt("Write a short review:");
+    if (!review?.trim()) return;
+    const { error } = await db.from("customer_reviews").upsert({booking_id:bookingId,user_id:currentUser.id,rating,review_text:review.trim()},{onConflict:"booking_id"});
+    if (error) return message(error.message,"error");
+    message("Thank you. Your review will appear after Admin approval.","success");
+  }
 
   async function start() {
     const { data: { session } } = await db.auth.getSession();
