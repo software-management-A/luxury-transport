@@ -48,6 +48,8 @@
     holder.querySelectorAll(".location-delete").forEach(btn => btn.addEventListener("click", async () => { if (!confirm("Delete this saved location?")) return; const { error: delError } = await db.from("customer_saved_locations").delete().eq("id", btn.dataset.id).eq("user_id", currentUser.id); if (delError) return message(delError.message, "error"); message("Location deleted.", "success"); loadLocations(); }));
   }
 
+  if ($("locationName")) LocationPicker.bind({name:$("locationName"),lat:$("locationLat"),lng:$("locationLng"),link:$("locationMap"),after:s=>{$("locationAddress").value=s.label;}});
+
   $("locationForm")?.addEventListener("submit", async e => {
     e.preventDefault();
     const row = { user_id: currentUser.id, label: $("locationLabel").value.trim(), location_type: $("locationType").value, location_name: $("locationName").value.trim(), address: $("locationAddress").value.trim() || null, latitude: Number($("locationLat").value), longitude: Number($("locationLng").value), google_maps_url: $("locationMap").value.trim() || null };
@@ -55,6 +57,24 @@
     if (error) return message(error.message, "error"); e.target.reset(); message("Location saved.", "success"); loadLocations();
   });
 
+
+  async function loadNotifications() {
+    const holder = $("notificationList");
+    if (!holder) return;
+    const { data, error } = await db.from("notifications").select("id,title,message,is_read,created_at,booking_id").eq("user_id", currentUser.id).order("created_at", { ascending: false }).limit(100);
+    if (error) { holder.innerHTML = `<div class="empty-state compact"><p>Notifications are not available yet.</p></div>`; return; }
+    const list = data || [];
+    const unread = list.filter(n => !n.is_read).length;
+    const badge = $("notificationBadge");
+    if (badge) { badge.textContent = unread; badge.hidden = unread === 0; }
+    holder.innerHTML = list.length ? list.map(n => `<article class="customer-notification ${n.is_read ? "" : "unread"}" data-id="${esc(n.id)}"><div><strong>${esc(n.title || "Booking update")}</strong><p>${esc(n.message || "")}</p><small>${n.created_at ? esc(new Date(n.created_at).toLocaleString()) : ""}</small></div>${n.is_read ? "" : `<button type="button" class="mini-btn notification-read" data-id="${esc(n.id)}">Mark read</button>`}</article>`).join("") : `<div class="empty-state compact"><p>No notifications yet.</p></div>`;
+    holder.querySelectorAll(".notification-read").forEach(btn => btn.addEventListener("click", async () => { await db.from("notifications").update({is_read:true}).eq("id",btn.dataset.id).eq("user_id",currentUser.id); loadNotifications(); }));
+  }
+
+  $("markAllRead")?.addEventListener("click", async () => {
+    await db.from("notifications").update({is_read:true}).eq("user_id",currentUser?.id).eq("is_read",false);
+    loadNotifications();
+  });
 
   async function submitReview(bookingId) {
     const rating = Number(prompt("Rate this completed trip from 1 to 5 stars:"));
@@ -71,7 +91,7 @@
     if (!session) return location.replace("./login.html");
     currentUser = session.user;
     bindViews(); bindActivity(); await loadSessionSettings();
-    await Promise.all([loadProfile(), loadBookings(), loadLocations()]);
+    await Promise.all([loadProfile(), loadBookings(), loadLocations(), loadNotifications()]);
   }
   db.auth.onAuthStateChange((event, session) => { if (event === "SIGNED_OUT" || (!session && event !== "INITIAL_SESSION")) location.replace("./login.html"); });
   start();

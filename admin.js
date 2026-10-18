@@ -388,6 +388,14 @@ $("manageForm").addEventListener(
 
     message("Booking updated successfully.");
 
+    // Send every available customer channel. The Edge Function safely skips
+    // Email/WhatsApp when the provider or customer destination is unavailable.
+    try {
+      await db.functions.invoke("notification-dispatch", { body: { booking_id: args.p_booking_id } });
+    } catch (notifyError) {
+      console.warn("Notification dispatch is not configured yet:", notifyError);
+    }
+
     await load();
     openBooking(args.p_booking_id);
   }

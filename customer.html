@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071525"><title>My Account | Luxury Transport Dubai</title><link rel="stylesheet" href="./style.css?v=17"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#071525"><title>My Account | Luxury Transport Dubai</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><link rel="stylesheet" href="./style.css?v=22"></head>
 <body>
 <header class="top"><div class="wrap nav"><a class="brand" href="./index.html">Luxury Transport Dubai</a><nav class="navlinks"><a href="./booking.html">New Booking</a><a href="#" id="logout">Logout</a></nav></div></header>
 <div class="pagehead"><div class="wrap"><h1>My Account</h1><p id="welcomeText">Your private transport account.</p></div></div>
@@ -10,6 +10,7 @@
   <div class="account-menu">
     <button class="account-menu-btn active" data-view="bookingsView">🚘 <span>My Bookings</span></button>
     <button class="account-menu-btn" data-view="locationsView">📍 <span>Saved Locations</span></button>
+    <button class="account-menu-btn" data-view="notificationsView">🔔 <span>Notifications</span><em id="notificationBadge" class="notification-badge" hidden>0</em></button>
     <button class="account-menu-btn" data-view="profileView">👤 <span>Profile</span></button>
   </div>
 
@@ -22,19 +23,17 @@
       <form id="locationForm" class="formgrid">
         <div class="field"><label>Label</label><input id="locationLabel" placeholder="Home" required></div>
         <div class="field"><label>Type</label><select id="locationType"><option value="home">Home</option><option value="work">Work</option><option value="school">School</option><option value="gym">Gym</option><option value="custom">Custom</option></select></div>
-        <div class="field full"><label>Location Name</label><input id="locationName" placeholder="Building / area name" required></div>
-        <div class="field full"><label>Address</label><input id="locationAddress" placeholder="Full address"></div>
-        <div class="field"><label>Latitude</label><input id="locationLat" type="number" step="any" min="-90" max="90" required></div>
-        <div class="field"><label>Longitude</label><input id="locationLng" type="number" step="any" min="-180" max="180" required></div>
-        <div class="field full"><label>Google Maps Link (optional)</label><input id="locationMap" type="url" placeholder="https://maps.google.com/..."></div>
+        <div class="field full"><label>Location</label><div class="location-box"><input id="locationName" placeholder="Enter location" autocomplete="off" required><input id="locationAddress" type="hidden"><input id="locationLat" type="hidden" required><input id="locationLng" type="hidden" required><input id="locationMap" type="hidden"></div><p class="muted">Use Current Location, choose on map, or type a place name.</p></div>
         <div class="field full"><button class="btn" type="submit">Save Location</button></div>
       </form><div id="savedLocations" class="saved-location-list"></div>
     </div>
   </section>
 
+  <section id="notificationsView" class="account-view"><div class="card"><div class="section-row"><div><h2>Notifications</h2><p class="muted">Booking updates and important messages.</p></div><button id="markAllRead" class="mini-btn" type="button">Mark all read</button></div><div id="notificationList" class="notification-list"></div></div></section>
+
   <section id="profileView" class="account-view"><div class="card"><h2>Profile</h2><div id="profileDetails" class="profile-details"></div></div></section>
 </div></main>
 
 <div id="logoutWarning" class="session-modal" hidden><div class="session-box"><h3>Still there?</h3><p>You will be logged out soon because there has been no activity.</p><strong id="logoutCountdown">60</strong><span>seconds</span><div class="session-actions"><button id="stayLoggedIn" class="btn">Stay Logged In</button><button id="logoutNow" class="mini-btn">Logout Now</button></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./config.js"></script><script src="./customer.js?v=17"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="./config.js"></script><script src="./location-picker.js?v=22"></script><script src="./customer.js?v=22"></script>
 </body></html>
