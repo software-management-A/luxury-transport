@@ -58,6 +58,12 @@ $("bookingForm")?.addEventListener(
   async (e) => {
     e.preventDefault();
 
+    if (!LocationPicker.isSelected($("pickupLocation")) || !LocationPicker.isSelected($("dropoffLocation"))) {
+      return show("bookingMessage", "Please select exact pickup and drop-off from search, Current Location, or Choose on Map.");
+    }
+    const invalidStop = [...document.querySelectorAll("#extraStops .extra-stop-name")].find(x => x.value.trim() && !LocationPicker.isSelected(x));
+    if (invalidStop) return show("bookingMessage", "Please select every additional stop from search, Current Location, or Choose on Map.");
+
     show(
       "bookingMessage",
       "Sending request...",
@@ -146,6 +152,17 @@ $("bookingForm")?.addEventListener(
     const pin =
       r?.tracking_pin ||
       "Unavailable";
+
+    try {
+      const { data: { user } } = await db.auth.getUser();
+      if (user && r?.reference_number && r?.tracking_pin) {
+        await db.rpc("attach_booking_to_current_user_v24", {
+          p_reference_number: r.reference_number,
+          p_tracking_pin: String(r.tracking_pin),
+          p_trip_date: tripDate
+        });
+      }
+    } catch (claimError) { console.warn("Account booking link skipped:", claimError); }
 
     const box =
       $("bookingMessage");
