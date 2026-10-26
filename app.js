@@ -50,6 +50,32 @@ $("addStopBtn")?.addEventListener("click", () => {
 function collectExtraStops(){return [...document.querySelectorAll("#extraStops .extra-stop-row")].map((row,i)=>({order:i+1,name:row.querySelector(".extra-stop-name").value.trim(),map_link:row.querySelector(".extra-stop-map").value.trim()||null,latitude:Number(row.querySelector(".extra-stop-lat").value)||null,longitude:Number(row.querySelector(".extra-stop-lng").value)||null})).filter(x=>x.name);}
 
 /* =====================================================
+   INTERNATIONAL PHONE INPUTS - V25
+   ===================================================== */
+const phoneInputs = {};
+function initInternationalPhones(){
+  if (!window.intlTelInput) return;
+  const common = {
+    initialCountry: "ae",
+    separateDialCode: true,
+    nationalMode: true,
+    autoPlaceholder: "aggressive",
+    strictMode: true,
+    loadUtils: () => import("https://cdn.jsdelivr.net/npm/intl-tel-input@25.12.5/build/js/utils.js")
+  };
+  if ($("mobile")) phoneInputs.mobile = window.intlTelInput($("mobile"), common);
+  if ($("whatsapp")) phoneInputs.whatsapp = window.intlTelInput($("whatsapp"), common);
+}
+function validPhone(key, required){
+  const input=$(key), iti=phoneInputs[key];
+  if(!input) return {ok:!required,value:null};
+  if(!input.value.trim()) return {ok:!required,value:null};
+  if(!iti || !iti.isValidNumber()) return {ok:false,value:null};
+  return {ok:true,value:iti.getNumber()};
+}
+initInternationalPhones();
+
+/* =====================================================
    BOOKING FORM
    ===================================================== */
 
@@ -63,6 +89,12 @@ $("bookingForm")?.addEventListener(
     }
     const invalidStop = [...document.querySelectorAll("#extraStops .extra-stop-name")].find(x => x.value.trim() && !LocationPicker.isSelected(x));
     if (invalidStop) return show("bookingMessage", "Please select every additional stop from search, Current Location, or Choose on Map.");
+
+    const mobileCheck = validPhone("mobile", true);
+    if (!mobileCheck.ok) return show("bookingMessage", "Please enter a valid mobile number for the selected country.");
+    const whatsappCheck = validPhone("whatsapp", false);
+    if (!whatsappCheck.ok) return show("bookingMessage", "Please enter a valid WhatsApp number for the selected country, or leave it empty.");
+    if (!$('email')?.checkValidity()) return show("bookingMessage", "Please enter a valid email address.");
 
     show(
       "bookingMessage",
@@ -80,19 +112,21 @@ $("bookingForm")?.addEventListener(
 
     const { data, error } =
       await db.rpc(
-        "create_guest_booking_with_pin",
+        "create_guest_booking_v25",
         {
           p_first_name:
             v("firstName"),
+          p_email:
+            v("email"),
 
           p_last_name:
             v("lastName"),
 
           p_mobile:
-            v("mobile"),
+            mobileCheck.value,
 
           p_whatsapp:
-            v("whatsapp"),
+            whatsappCheck.value,
 
           p_pickup_location:
             v("pickupLocation"),

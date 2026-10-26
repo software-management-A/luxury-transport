@@ -258,6 +258,22 @@ function render() {
   });
 }
 
+function coordsFromMapLink(url){
+  const m=String(url||"").match(/[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/i);
+  return m ? [Number(m[1]),Number(m[2])] : null;
+}
+async function loadDrivingDistance(b){
+  const el=$("bookingDistanceV25"); if(!el)return;
+  const a=coordsFromMapLink(b.pickup_map_link), z=coordsFromMapLink(b.dropoff_map_link);
+  if(!a||!z){el.textContent="Distance unavailable (exact map pins required)";return;}
+  el.textContent="Calculating…";
+  try{
+    const u=`https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${z[1]},${z[0]}?overview=false`;
+    const r=await fetch(u); const j=await r.json(); const meters=j?.routes?.[0]?.distance;
+    el.textContent=Number.isFinite(meters)?`${(meters/1000).toFixed(1)} km driving distance`:`Distance unavailable`;
+  }catch{el.textContent="Distance unavailable";}
+}
+
 function openBooking(id) {
   const b = bookings.find(
     x => String(x.id) === String(id)
@@ -302,6 +318,18 @@ function openBooking(id) {
       ${esc(b.customer_comment || "-")}
     </div>
     <div>
+      <strong>End date & time</strong><br>
+      ${esc(fmtTime(b.estimated_end_time))}
+    </div>
+    <div>
+      <strong>Distance</strong><br>
+      <span id="bookingDistanceV25">Calculating…</span>
+    </div>
+    <div>
+      <strong>Payment amount</strong><br>
+      ${b.price == null ? "Pending" : esc(money(Number(b.price)))}
+    </div>
+    <div>
       <strong>Payment status</strong><br>
       ${esc(b.payment_status || "unpaid")}
     </div>
@@ -312,6 +340,7 @@ function openBooking(id) {
   $("manageEnd").value = localInput(b.estimated_end_time);
   $("manageComment").value = b.admin_comment || "";
   $("managePaymentLink").value = b.payment_link || "";
+  loadDrivingDistance(b);
 
   $("bookingManager").scrollIntoView({
     behavior: "smooth",
