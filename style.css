@@ -97,3 +97,6 @@ table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;ove
 
 /* V25 international phone input */
 .iti{width:100%}.iti input{width:100%}.iti__selected-country{min-height:48px}.field .iti+small{display:block;margin-top:6px}
+
+/* V26 live route estimate */
+.trip-estimate-v26{padding:16px;border:1px solid #dbe6f3;border-radius:16px;background:#f7faff;display:grid;gap:7px}.trip-estimate-v26 strong{font-size:16px}.trip-estimate-v26 small{color:#61738a;margin-top:4px}

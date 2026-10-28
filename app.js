@@ -75,6 +75,70 @@ function validPhone(key, required){
 }
 initInternationalPhones();
 
+
+/* =====================================================
+   V26 LIVE ROUTE ESTIMATE
+   End time = OSRM driving duration + 10 minutes.
+   Approximate price = distance x configured price/km.
+   ===================================================== */
+let routeEstimateV26 = null;
+let estimateTimerV26 = null;
+async function getPricePerKmV26(){
+  try{
+    const {data,error}=await db.from("app_settings").select("price_per_km").limit(1).maybeSingle();
+    if(!error && Number(data?.price_per_km)>0) return Number(data.price_per_km);
+  }catch(_e){}
+  return 5;
+}
+function routePointsV26(){
+  const pts=[];
+  const a=[Number($("pickupLat")?.value),Number($("pickupLng")?.value)];
+  if(a.every(Number.isFinite)&&a[0]&&a[1]) pts.push(a);
+  document.querySelectorAll("#extraStops .extra-stop-row").forEach(row=>{
+    const x=[Number(row.querySelector(".extra-stop-lat")?.value),Number(row.querySelector(".extra-stop-lng")?.value)];
+    if(x.every(Number.isFinite)&&x[0]&&x[1]) pts.push(x);
+  });
+  const z=[Number($("dropoffLat")?.value),Number($("dropoffLng")?.value)];
+  if(z.every(Number.isFinite)&&z[0]&&z[1]) pts.push(z);
+  return pts;
+}
+function fmtEndV26(iso){
+  if(!iso)return "—";
+  return new Date(iso).toLocaleString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+async function updateRouteEstimateV26(){
+  const box=$("tripEstimateV26"), pts=routePointsV26(), pickup=$("pickupTime")?.value;
+  if(!box)return;
+  if(pts.length<2){box.style.display="none";routeEstimateV26=null;return;}
+  box.style.display="block";
+  $("estimateDistance").textContent="Distance: calculating…";
+  $("estimateDuration").textContent="Driving time: calculating…";
+  $("estimateEnd").textContent="Approx. end time: calculating…";
+  $("estimatePrice").textContent="Approx. price: calculating…";
+  try{
+    const coords=pts.map(([lat,lng])=>`${lng},${lat}`).join(";");
+    const res=await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=false`);
+    const json=await res.json(); const route=json?.routes?.[0];
+    if(!res.ok||!route) throw new Error("Route unavailable");
+    const km=route.distance/1000, driveMin=Math.ceil(route.duration/60), totalMin=driveMin+10;
+    const rate=await getPricePerKmV26(); const approx=Math.ceil(km*rate);
+    let endIso=null;
+    if(pickup){const d=new Date(pickup); if(!Number.isNaN(d.getTime())){d.setMinutes(d.getMinutes()+totalMin);endIso=d.toISOString();}}
+    routeEstimateV26={distance_km:Number(km.toFixed(2)),driving_minutes:driveMin,total_minutes:totalMin,estimated_price:approx,estimated_end_time:endIso};
+    $("estimateDistance").textContent=`Distance: ${km.toFixed(1)} km`;
+    $("estimateDuration").textContent=`Driving time: approx. ${driveMin} min + 10 min extra`;
+    $("estimateEnd").textContent=`Approx. end time: ${fmtEndV26(endIso)}`;
+    $("estimatePrice").textContent=`Approx. price: AED ${approx.toFixed(2)}`;
+  }catch(e){
+    routeEstimateV26=null;
+    $("estimateDistance").textContent="Route estimate temporarily unavailable";
+    $("estimateDuration").textContent="Driving time: —"; $("estimateEnd").textContent="Approx. end time: —"; $("estimatePrice").textContent="Approx. price: —";
+  }
+}
+function scheduleEstimateV26(){clearTimeout(estimateTimerV26);estimateTimerV26=setTimeout(updateRouteEstimateV26,250);}
+document.addEventListener("location:selected",scheduleEstimateV26);
+$("pickupTime")?.addEventListener("change",scheduleEstimateV26);
+
 /* =====================================================
    BOOKING FORM
    ===================================================== */
@@ -112,7 +176,7 @@ $("bookingForm")?.addEventListener(
 
     const { data, error } =
       await db.rpc(
-        "create_guest_booking_v25",
+        "create_guest_booking_v26",
         {
           p_first_name:
             v("firstName"),
@@ -153,6 +217,11 @@ $("bookingForm")?.addEventListener(
 
           p_comment:
             v("comment"),
+
+          p_estimated_distance_km: routeEstimateV26?.distance_km ?? null,
+          p_estimated_duration_minutes: routeEstimateV26?.total_minutes ?? null,
+          p_estimated_end_time: routeEstimateV26?.estimated_end_time ?? null,
+          p_estimated_price: routeEstimateV26?.estimated_price ?? null,
         },
       );
 
@@ -407,110 +476,38 @@ $("bookingForm")?.addEventListener(
    ZIINA AUTOMATIC PAYMENT
    ===================================================== */
 
-async function createZiinaPayment(
-  reference,
-  tripDate,
-  button,
-) {
-  if (
-    !reference ||
-    !tripDate ||
-    !button
-  ) {
-    return;
-  }
-
-  const originalText =
-    button.textContent;
-
+async function createZiinaPayment(reference, tripDate, button) {
+  if (!reference || !tripDate || !button) return;
+  const originalText = button.textContent;
   button.disabled = true;
-
-  button.textContent =
-    "Opening secure payment...";
-
+  button.textContent = "Opening secure payment...";
   try {
-    const supabaseUrl =
-      window.SUPABASE_URL ||
-      db?.supabaseUrl;
-
-    if (!supabaseUrl) {
-      throw new Error(
-        "Supabase URL unavailable",
-      );
+    // V26: use the Supabase client so the function receives the required
+    // project/API headers automatically. This avoids silent 401/no-response
+    // failures caused by the previous raw fetch call.
+    const { data: result, error } = await db.functions.invoke("ziina-create-payment", {
+      body: { reference, trip_date: tripDate }
+    });
+    if (error) {
+      let detail = error.message || "Ziina function request failed";
+      try {
+        const ctx = error.context;
+        if (ctx && typeof ctx.json === "function") {
+          const body = await ctx.json();
+          detail = body?.error || body?.message || detail;
+        }
+      } catch (_e) {}
+      throw new Error(detail);
     }
-
-    const endpoint =
-      `${supabaseUrl}` +
-      `/functions/v1/ziina-create-payment`;
-
-    const response =
-      await fetch(endpoint, {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          reference:
-            reference,
-
-          trip_date:
-            tripDate,
-        }),
-      });
-
-    let result;
-
-    try {
-      result =
-        await response.json();
-    } catch {
-      throw new Error(
-        "Invalid payment response",
-      );
-    }
-
-    if (
-      !response.ok ||
-      !result?.payment_url
-    ) {
-      throw new Error(
-        result?.error ||
-          "Unable to create payment",
-      );
-    }
-
-    const paymentUrl =
-      safeUrl(
-        result.payment_url,
-      );
-
-    if (!paymentUrl) {
-      throw new Error(
-        "Invalid payment link",
-      );
-    }
-
-    window.location.href =
-      paymentUrl;
+    if (!result?.payment_url) throw new Error(result?.error || "Ziina did not return a payment link");
+    const paymentUrl = safeUrl(result.payment_url);
+    if (!paymentUrl) throw new Error("Ziina returned an invalid payment link");
+    window.location.assign(paymentUrl);
   } catch (error) {
-    console.error(
-      "Ziina payment error:",
-      error,
-    );
-
-    alert(
-      error?.message ||
-        "Unable to open payment. Please try again.",
-    );
-
-    button.disabled =
-      false;
-
-    button.textContent =
-      originalText;
+    console.error("Ziina payment error:", error);
+    alert(error?.message || "Unable to open Ziina payment. Please try again.");
+    button.disabled = false;
+    button.textContent = originalText;
   }
 }
 

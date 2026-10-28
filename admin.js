@@ -337,7 +337,6 @@ function openBooking(id) {
 
   $("managePrice").value = b.price ?? "";
   $("managePickup").value = localInput(b.pickup_time);
-  $("manageEnd").value = localInput(b.estimated_end_time);
   $("manageComment").value = b.admin_comment || "";
   $("managePaymentLink").value = b.payment_link || "";
   loadDrivingDistance(b);
@@ -401,8 +400,7 @@ $("manageForm").addEventListener(
         $("managePaymentLink").value || null,
       p_pickup_time:
         isoOrNull($("managePickup").value),
-      p_estimated_end_time:
-        isoOrNull($("manageEnd").value)
+      p_estimated_end_time: null
     };
 
     const { error } = await db.rpc(
