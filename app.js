@@ -45,7 +45,7 @@ $("addStopBtn")?.addEventListener("click", () => {
   extraStopCounter += 1; const row=document.createElement("div"); row.className="extra-stop-row route-point";
   row.innerHTML=`<div class="field"><label>Stop ${extraStopCounter}</label><input class="extra-stop-name" placeholder="Enter stop location" autocomplete="off" required><input class="extra-stop-map" type="hidden"><input class="extra-stop-lat" type="hidden"><input class="extra-stop-lng" type="hidden"></div><button type="button" class="location-delete extra-stop-remove">Remove</button>`;
   LocationPicker.bind({name:row.querySelector(".extra-stop-name"),lat:row.querySelector(".extra-stop-lat"),lng:row.querySelector(".extra-stop-lng"),link:row.querySelector(".extra-stop-map")});
-  row.querySelector(".extra-stop-remove").onclick=()=>row.remove(); $("extraStops").appendChild(row);
+  row.querySelector(".extra-stop-remove").onclick=()=>{row.remove();scheduleEstimateV26();}; $("extraStops").appendChild(row);
 });
 function collectExtraStops(){return [...document.querySelectorAll("#extraStops .extra-stop-row")].map((row,i)=>({order:i+1,name:row.querySelector(".extra-stop-name").value.trim(),map_link:row.querySelector(".extra-stop-map").value.trim()||null,latitude:Number(row.querySelector(".extra-stop-lat").value)||null,longitude:Number(row.querySelector(".extra-stop-lng").value)||null})).filter(x=>x.name);}
 
@@ -126,7 +126,7 @@ async function updateRouteEstimateV26(){
     if(pickup){const d=new Date(pickup); if(!Number.isNaN(d.getTime())){d.setMinutes(d.getMinutes()+totalMin);endIso=d.toISOString();}}
     routeEstimateV26={distance_km:Number(km.toFixed(2)),driving_minutes:driveMin,total_minutes:totalMin,estimated_price:approx,estimated_end_time:endIso};
     $("estimateDistance").textContent=`Distance: ${km.toFixed(1)} km`;
-    $("estimateDuration").textContent=`Driving time: approx. ${driveMin} min + 10 min extra`;
+    $("estimateDuration").textContent=`Estimated trip time: approx. ${totalMin} min`;
     $("estimateEnd").textContent=`Approx. end time: ${fmtEndV26(endIso)}`;
     $("estimatePrice").textContent=`Approx. price: AED ${approx.toFixed(2)}`;
   }catch(e){
