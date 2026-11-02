@@ -274,6 +274,21 @@ async function loadDrivingDistance(b){
   }catch{el.textContent="Distance unavailable";}
 }
 
+async function loadBookingRouteV28(b){
+  const el=$("bookingRouteV28"); if(!el)return;
+  try{
+    const {data,error}=await db.rpc("admin_get_booking_stops_v28",{p_booking_id:b.id});
+    if(error) throw error;
+    const stops=Array.isArray(data)?data:[];
+    const lines=[`<div><strong>Pickup:</strong> ${mapLink(b.pickup_map_link,b.pickup_location)}</div>`];
+    stops.forEach((x,i)=>lines.push(`<div><strong>Stop ${i+1}:</strong> ${mapLink(x.map_link,x.name)}</div>`));
+    lines.push(`<div><strong>Drop-off:</strong> ${mapLink(b.dropoff_map_link,b.dropoff_location)}</div>`);
+    el.innerHTML=lines.join("");
+  }catch(e){
+    el.innerHTML=`<div><strong>Pickup:</strong> ${mapLink(b.pickup_map_link,b.pickup_location)}</div><div><strong>Drop-off:</strong> ${mapLink(b.dropoff_map_link,b.dropoff_location)}</div>`;
+  }
+}
+
 function openBooking(id) {
   const b = bookings.find(
     x => String(x.id) === String(id)
@@ -306,8 +321,8 @@ function openBooking(id) {
       ${mapLink(b.pickup_map_link, b.pickup_location)}
     </div>
     <div>
-      <strong>Drop-off</strong><br>
-      ${mapLink(b.dropoff_map_link, b.dropoff_location)}
+      <strong>Route / Stops</strong><br>
+      <div id="bookingRouteV28">Loading route…</div>
     </div>
     <div>
       <strong>Passengers</strong><br>
@@ -327,7 +342,7 @@ function openBooking(id) {
     </div>
     <div>
       <strong>Payment amount</strong><br>
-      ${b.price == null ? "Pending" : esc(money(Number(b.price)))}
+      ${b.price == null ? (b.estimated_price == null ? "Pending" : esc(money(Number(b.estimated_price)))) : esc(money(Number(b.price)))}
     </div>
     <div>
       <strong>Payment status</strong><br>
@@ -335,11 +350,12 @@ function openBooking(id) {
     </div>
   `;
 
-  $("managePrice").value = b.price ?? "";
+  $("managePrice").value = b.price ?? b.estimated_price ?? "";
   $("managePickup").value = localInput(b.pickup_time);
   $("manageComment").value = b.admin_comment || "";
   $("managePaymentLink").value = b.payment_link || "";
   loadDrivingDistance(b);
+  loadBookingRouteV28(b);
 
   $("bookingManager").scrollIntoView({
     behavior: "smooth",

@@ -45,7 +45,7 @@ $("addStopBtn")?.addEventListener("click", () => {
   extraStopCounter += 1; const row=document.createElement("div"); row.className="extra-stop-row route-point";
   row.innerHTML=`<div class="field"><label>Stop ${extraStopCounter}</label><input class="extra-stop-name" placeholder="Enter stop location" autocomplete="off" required><input class="extra-stop-map" type="hidden"><input class="extra-stop-lat" type="hidden"><input class="extra-stop-lng" type="hidden"></div><button type="button" class="location-delete extra-stop-remove">Remove</button>`;
   LocationPicker.bind({name:row.querySelector(".extra-stop-name"),lat:row.querySelector(".extra-stop-lat"),lng:row.querySelector(".extra-stop-lng"),link:row.querySelector(".extra-stop-map")});
-  row.querySelector(".extra-stop-remove").onclick=()=>{row.remove();scheduleEstimateV26();}; $("extraStops").appendChild(row);
+  row.querySelector(".extra-stop-remove").onclick=()=>{row.remove(); scheduleEstimateV26();}; $("extraStops").appendChild(row);
 });
 function collectExtraStops(){return [...document.querySelectorAll("#extraStops .extra-stop-row")].map((row,i)=>({order:i+1,name:row.querySelector(".extra-stop-name").value.trim(),map_link:row.querySelector(".extra-stop-map").value.trim()||null,latitude:Number(row.querySelector(".extra-stop-lat").value)||null,longitude:Number(row.querySelector(".extra-stop-lng").value)||null})).filter(x=>x.name);}
 
@@ -160,6 +160,30 @@ $("bookingForm")?.addEventListener(
     if (!whatsappCheck.ok) return show("bookingMessage", "Please enter a valid WhatsApp number for the selected country, or leave it empty.");
     if (!$('email')?.checkValidity()) return show("bookingMessage", "Please enter a valid email address.");
 
+    const extraStopsPreview = collectExtraStops();
+    if (extraStopsPreview.length) {
+      if (!routeEstimateV26) {
+        await updateRouteEstimateV26();
+      }
+      if (!routeEstimateV26) return show("bookingMessage", "Please wait for the route calculation and try again.");
+      const routeLines = [
+        `Pickup: ${$("pickupLocation").value.trim()}`,
+        ...extraStopsPreview.map((x,i)=>`Stop ${i+1}: ${x.name}`),
+        `Drop-off: ${$("dropoffLocation").value.trim()}`
+      ];
+      const summary = [
+        "Please confirm stops",
+        "",
+        ...routeLines,
+        "",
+        `Distance: ${routeEstimateV26.distance_km.toFixed(1)} km`,
+        `Estimated time: ${routeEstimateV26.total_minutes} min`,
+        `Approx. end time: ${fmtEndV26(routeEstimateV26.estimated_end_time)}`,
+        `Approx. price: AED ${Number(routeEstimateV26.estimated_price).toFixed(2)}`
+      ].join("\n");
+      if (!window.confirm(summary)) return;
+    }
+
     show(
       "bookingMessage",
       "Sending request...",
@@ -176,7 +200,7 @@ $("bookingForm")?.addEventListener(
 
     const { data, error } =
       await db.rpc(
-        "create_guest_booking_v26",
+        "create_guest_booking_v28",
         {
           p_first_name:
             v("firstName"),
