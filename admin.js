@@ -304,34 +304,43 @@ function trackingUrlV29(b){
   if(b?.pickup_time) u.searchParams.set("date",new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Dubai",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(b.pickup_time)));
   return u.href;
 }
-function customerMessageV29(b){
+function customerMessageV29(b, channel="whatsapp"){
   const name=[b.first_name,b.last_name].filter(Boolean).join(" ")||"Customer";
-  const stops=activeBookingStopsV29.map((x,i)=>`Stop ${i+1}: ${x.name}`).join("\n");
   const amount=b.price ?? b.estimated_price;
   const paid=String(b.payment_status||"unpaid").toLowerCase()==="paid";
+  const bold=(label)=>channel==="whatsapp"?`*${label}*`:label.toUpperCase();
+  const stops=activeBookingStopsV29.map((x,i)=>`${bold(`Stop ${i+1}:`)} ${x.name}`).join("\n");
   const lines=[
-    `Dear ${name},`, `${dubaiGreetingV29()}.`, "", "Thank you for choosing Luxury Transport Dubai.", "",
-    "Booking Details", `Booking Reference: ${b.reference_number}`, `Status: ${b.status||"pending"}`,
-    `Pickup: ${b.pickup_location||"—"}`, stops, `Drop-off: ${b.dropoff_location||"—"}`,
-    `Pickup Date & Time: ${fmtTime(b.pickup_time)}`, `Estimated End Time: ${fmtTime(b.estimated_end_time)}`,
-    b.estimated_distance_km!=null?`Distance: ${Number(b.estimated_distance_km).toFixed(1)} km`:"",
-    b.estimated_duration_minutes!=null?`Estimated Time: ${b.estimated_duration_minutes} min`:"",
-    amount!=null?`Total Price: AED ${Number(amount).toFixed(2)}`:"Total Price: Pending",
-    `Payment Status: ${b.payment_status||"unpaid"}`
+    `Dear ${name},`, `${dubaiGreetingV29()}.`, "",
+    "Thank you for choosing Luxury Transport Dubai.", "",
+    channel==="whatsapp"?"*BOOKING DETAILS*":"BOOKING DETAILS",
+    `${bold("Booking Reference:")} ${b.reference_number}`,
+    `${bold("Status:")} ${b.status||"pending"}`,
+    `${bold("Pickup:")} ${b.pickup_location||"—"}`,
+    stops,
+    `${bold("Drop-off:")} ${b.dropoff_location||"—"}`,
+    `${bold("Pickup Date & Time:")} ${fmtTime(b.pickup_time)}`,
+    `${bold("Estimated End Time:")} ${fmtTime(b.estimated_end_time)}`,
+    b.estimated_distance_km!=null?`${bold("Distance:")} ${Number(b.estimated_distance_km).toFixed(1)} km`:"",
+    b.estimated_duration_minutes!=null?`${bold("Estimated Driving Time:")} ${b.estimated_duration_minutes} min`:"",
+    amount!=null?`${bold("Total Price:")} AED ${Number(amount).toFixed(2)}`:`${bold("Total Price:")} Pending`,
+    `${bold("Payment Status:")} ${b.payment_status||"unpaid"}`
   ].filter(Boolean);
-  if(!paid){ lines.push("","Payment","Your booking is currently unpaid. You can pay here:",b.payment_link||trackingUrlV29(b)); }
-  lines.push("","Track / View Booking",trackingUrlV29(b),"","Thank you for choosing Luxury Transport Dubai.","We look forward to serving you again on your next booking.","","Kind regards,","Captain Abdur Raheem","Luxury Transport Dubai");
+  if(!paid){
+    lines.push("",channel==="whatsapp"?"*PAYMENT*":"PAYMENT",`${bold("Payment Link:")} ${b.payment_link||trackingUrlV29(b)}`);
+  }
+  lines.push("",channel==="whatsapp"?"*TRACK / VIEW BOOKING*":"TRACK / VIEW BOOKING",trackingUrlV29(b),"","Thank you for choosing Luxury Transport Dubai.","We look forward to serving you again on your next booking.","","Kind regards,","Captain Abdur Raheem","Luxury Transport Dubai");
   return lines.join("\n");
 }
 function openWhatsAppV29(b){
   const n=String(b.whatsapp||b.phone||"").replace(/\D/g,"");
   if(!n) return message("Customer WhatsApp number is missing.");
-  window.open(`https://wa.me/${n}?text=${encodeURIComponent(customerMessageV29(b))}`,"_blank","noopener");
+  window.open(`https://wa.me/${n}?text=${encodeURIComponent(customerMessageV29(b,"whatsapp"))}`,"_blank","noopener");
 }
 function openEmailV29(b){
   if(!b.email) return message("Customer email address is missing.");
   const subject=`Booking Update — ${b.reference_number}`;
-  location.href=`mailto:${encodeURIComponent(b.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(customerMessageV29(b))}`;
+  location.href=`mailto:${encodeURIComponent(b.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(customerMessageV29(b,"email"))}`;
 }
 
 function openBooking(id) {
@@ -393,9 +402,12 @@ function openBooking(id) {
       <strong>Payment status</strong><br>
       ${esc(b.payment_status || "unpaid")}
     </div>
-    <div class="v29-send-actions" style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
-      <button type="button" class="btn" id="sendWhatsAppV29">Send via WhatsApp</button>
-      <button type="button" class="btn" id="sendEmailV29">Send via Email</button>
+    <div class="v30-confirm-wrap" style="grid-column:1/-1;margin-top:8px">
+      <button type="button" class="btn" id="sendConfirmationV30" style="display:none">Send Confirmation</button>
+      <div id="confirmationChannelsV30" style="display:none;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <button type="button" class="btn" id="sendWhatsAppV29">WhatsApp</button>
+        <button type="button" class="btn" id="sendEmailV29">Email</button>
+      </div>
     </div>
   `;
 
@@ -405,8 +417,12 @@ function openBooking(id) {
   $("managePaymentLink").value = b.payment_link || "";
   loadDrivingDistance(b);
   loadBookingRouteV28(b);
-  $("sendWhatsAppV29")?.addEventListener("click",()=>openWhatsAppV29(b));
-  $("sendEmailV29")?.addEventListener("click",()=>openEmailV29(b));
+  $("sendConfirmationV30")?.addEventListener("click",()=>{
+    const box=$("confirmationChannelsV30");
+    if(box) box.style.display=box.style.display==="flex"?"none":"flex";
+  });
+  $("sendWhatsAppV29")?.addEventListener("click",()=>openWhatsAppV29(bookings.find(x=>String(x.id)===String($("manageId").value))||b));
+  $("sendEmailV29")?.addEventListener("click",()=>openEmailV29(bookings.find(x=>String(x.id)===String($("manageId").value))||b));
 
   $("bookingManager").scrollIntoView({
     behavior: "smooth",
@@ -485,6 +501,11 @@ $("manageForm").addEventListener(
 
     await load();
     openBooking(args.p_booking_id);
+    const confirmBtn=$("sendConfirmationV30");
+    if(confirmBtn){
+      confirmBtn.style.display="inline-flex";
+      confirmBtn.scrollIntoView({behavior:"smooth",block:"nearest"});
+    }
   }
 );
 
