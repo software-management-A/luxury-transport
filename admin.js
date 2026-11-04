@@ -280,13 +280,58 @@ async function loadBookingRouteV28(b){
     const {data,error}=await db.rpc("admin_get_booking_stops_v28",{p_booking_id:b.id});
     if(error) throw error;
     const stops=Array.isArray(data)?data:[];
+    activeBookingStopsV29 = stops;
     const lines=[`<div><strong>Pickup:</strong> ${mapLink(b.pickup_map_link,b.pickup_location)}</div>`];
     stops.forEach((x,i)=>lines.push(`<div><strong>Stop ${i+1}:</strong> ${mapLink(x.map_link,x.name)}</div>`));
     lines.push(`<div><strong>Drop-off:</strong> ${mapLink(b.dropoff_map_link,b.dropoff_location)}</div>`);
     el.innerHTML=lines.join("");
   }catch(e){
+    activeBookingStopsV29 = [];
     el.innerHTML=`<div><strong>Pickup:</strong> ${mapLink(b.pickup_map_link,b.pickup_location)}</div><div><strong>Drop-off:</strong> ${mapLink(b.dropoff_map_link,b.dropoff_location)}</div>`;
   }
+}
+
+
+let activeBookingStopsV29 = [];
+
+function dubaiGreetingV29(){
+  const hour=Number(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Dubai",hour:"2-digit",hour12:false}).format(new Date()));
+  return hour<12?"Good morning":hour<17?"Good afternoon":"Good evening";
+}
+function trackingUrlV29(b){
+  const u=new URL("./tracking.html",location.href);
+  if(b?.reference_number) u.searchParams.set("ref",b.reference_number);
+  if(b?.pickup_time) u.searchParams.set("date",new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Dubai",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(b.pickup_time)));
+  return u.href;
+}
+function customerMessageV29(b){
+  const name=[b.first_name,b.last_name].filter(Boolean).join(" ")||"Customer";
+  const stops=activeBookingStopsV29.map((x,i)=>`Stop ${i+1}: ${x.name}`).join("\n");
+  const amount=b.price ?? b.estimated_price;
+  const paid=String(b.payment_status||"unpaid").toLowerCase()==="paid";
+  const lines=[
+    `Dear ${name},`, `${dubaiGreetingV29()}.`, "", "Thank you for choosing Luxury Transport Dubai.", "",
+    "Booking Details", `Booking Reference: ${b.reference_number}`, `Status: ${b.status||"pending"}`,
+    `Pickup: ${b.pickup_location||"—"}`, stops, `Drop-off: ${b.dropoff_location||"—"}`,
+    `Pickup Date & Time: ${fmtTime(b.pickup_time)}`, `Estimated End Time: ${fmtTime(b.estimated_end_time)}`,
+    b.estimated_distance_km!=null?`Distance: ${Number(b.estimated_distance_km).toFixed(1)} km`:"",
+    b.estimated_duration_minutes!=null?`Estimated Time: ${b.estimated_duration_minutes} min`:"",
+    amount!=null?`Total Price: AED ${Number(amount).toFixed(2)}`:"Total Price: Pending",
+    `Payment Status: ${b.payment_status||"unpaid"}`
+  ].filter(Boolean);
+  if(!paid){ lines.push("","Payment","Your booking is currently unpaid. You can pay here:",b.payment_link||trackingUrlV29(b)); }
+  lines.push("","Track / View Booking",trackingUrlV29(b),"","Thank you for choosing Luxury Transport Dubai.","We look forward to serving you again on your next booking.","","Kind regards,","Captain Abdur Raheem","Luxury Transport Dubai");
+  return lines.join("\n");
+}
+function openWhatsAppV29(b){
+  const n=String(b.whatsapp||b.phone||"").replace(/\D/g,"");
+  if(!n) return message("Customer WhatsApp number is missing.");
+  window.open(`https://wa.me/${n}?text=${encodeURIComponent(customerMessageV29(b))}`,"_blank","noopener");
+}
+function openEmailV29(b){
+  if(!b.email) return message("Customer email address is missing.");
+  const subject=`Booking Update — ${b.reference_number}`;
+  location.href=`mailto:${encodeURIComponent(b.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(customerMessageV29(b))}`;
 }
 
 function openBooking(id) {
@@ -348,6 +393,10 @@ function openBooking(id) {
       <strong>Payment status</strong><br>
       ${esc(b.payment_status || "unpaid")}
     </div>
+    <div class="v29-send-actions" style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+      <button type="button" class="btn" id="sendWhatsAppV29">Send via WhatsApp</button>
+      <button type="button" class="btn" id="sendEmailV29">Send via Email</button>
+    </div>
   `;
 
   $("managePrice").value = b.price ?? b.estimated_price ?? "";
@@ -356,6 +405,8 @@ function openBooking(id) {
   $("managePaymentLink").value = b.payment_link || "";
   loadDrivingDistance(b);
   loadBookingRouteV28(b);
+  $("sendWhatsAppV29")?.addEventListener("click",()=>openWhatsAppV29(b));
+  $("sendEmailV29")?.addEventListener("click",()=>openEmailV29(b));
 
   $("bookingManager").scrollIntoView({
     behavior: "smooth",
@@ -431,13 +482,6 @@ $("manageForm").addEventListener(
 
     message("Booking updated successfully.");
 
-    // Send every available customer channel. The Edge Function safely skips
-    // Email/WhatsApp when the provider or customer destination is unavailable.
-    try {
-      await db.functions.invoke("notification-dispatch", { body: { booking_id: args.p_booking_id } });
-    } catch (notifyError) {
-      console.warn("Notification dispatch is not configured yet:", notifyError);
-    }
 
     await load();
     openBooking(args.p_booking_id);
